@@ -14,6 +14,7 @@ from typing import Any, Dict
 
 from common.tpm_utils import (
     tpm_available,
+    tpm_key_ready,
     export_tpm_public_key,
     tpm_sign_payload,
 )
@@ -28,11 +29,15 @@ class VehicleTPM:
     ):
         self.car_id = car_id
         self.require_real_tpm = require_real_tpm
-        self.real_tpm_available = tpm_available()
+        self.real_tpm_available = (
+            tpm_available()
+            and tpm_key_ready("car")
+        )
 
         if self.require_real_tpm and not self.real_tpm_available:
             raise RuntimeError(
-                "Real TPM is required, but TPM is not available."
+                "Real car TPM is required, but TPM is unavailable "
+                "or car TPM key has not been set up."
             )
 
     def is_available(self) -> bool:
@@ -43,7 +48,7 @@ class VehicleTPM:
 
     def get_public_key(self) -> str:
         if self.real_tpm_available:
-            return export_tpm_public_key()
+            return export_tpm_public_key("car")
 
         return f"SIMULATED_TPM_PUBLIC_KEY_FOR_{self.car_id}"
 
@@ -52,9 +57,16 @@ class VehicleTPM:
         challenge: Dict[str, Any],
     ) -> str:
         if self.real_tpm_available:
-            return tpm_sign_payload(challenge)
+            return tpm_sign_payload(
+                "car",
+                challenge,
+            )
 
-        return f"SIMULATED_SIGNATURE_BY_{self.car_id}_{challenge.get('nonce', '')}"
+        return (
+            f"SIMULATED_SIGNATURE_BY_"
+            f"{self.car_id}_"
+            f"{challenge.get('nonce', '')}"
+        )
 
     def attest_vehicle_state(self) -> dict:
         if self.real_tpm_available:
@@ -62,14 +74,16 @@ class VehicleTPM:
                 "car_id": self.car_id,
                 "mode": "REAL_TPM",
                 "tpm_available": True,
+                "key_ready": True,
                 "attested": False,
-                "note": "PCR attestation not implemented yet",
+                "note": "PCR quote attestation not implemented yet",
             }
 
         return {
             "car_id": self.car_id,
             "mode": "SIMULATION",
             "tpm_available": False,
+            "key_ready": False,
             "attested": False,
         }
 

@@ -7,7 +7,8 @@ Interaction between sender and delivery car.
 from typing import Dict, Any
 
 from common.protocol import (
-    make_presentation_message,
+    make_signed_challenge_payload,
+    make_presentation_message_v2,
 )
 
 from sender_client.wallet import (
@@ -26,12 +27,8 @@ class SenderCarSession:
         sender_id: str,
     ):
         self.sender_id = sender_id
-
         self.wallet = SenderWallet()
-
-        self.tpm = SenderTPM(
-            sender_id
-        )
+        self.tpm = SenderTPM(sender_id)
 
     def create_presentation(
         self,
@@ -39,43 +36,36 @@ class SenderCarSession:
         challenge: Dict[str, Any],
     ) -> Dict[str, Any]:
 
-        vc = self.wallet.get_vc(
-            delivery_id
-        )
+        vc = self.wallet.get_vc(delivery_id)
 
         if vc is None:
-
             raise ValueError(
-                f"No VC found for "
-                f"{delivery_id}"
+                f"No VC found for {delivery_id}"
             )
 
-        nonce = challenge["nonce"]
-
-        signature = (
-            self.tpm.sign_nonce(
-                nonce
-            )
+        payload = make_signed_challenge_payload(
+            holder_id=self.sender_id,
+            delivery_id=challenge["delivery_id"],
+            car_id=challenge["car_id"],
+            package_id=challenge["package_id"],
+            phase=challenge["phase"],
+            nonce=challenge["nonce"],
         )
 
-        presentation = (
-            make_presentation_message(
-                delivery_id=delivery_id,
-                holder_id=self.sender_id,
-                vc=vc,
-                nonce=nonce,
-                signature=signature,
-            )
+        signature = self.tpm.sign_payload(payload)
+
+        presentation = make_presentation_message_v2(
+            holder_id=self.sender_id,
+            vc=vc,
+            challenge=challenge,
+            signature=signature,
+            signature_type=self.tpm.signature_type(),
         )
 
         return presentation
 
 
 if __name__ == "__main__":
-
-    #
-    # Setup test VC
-    #
 
     wallet = SenderWallet()
 
@@ -86,16 +76,11 @@ if __name__ == "__main__":
             "SenderPickupCredential",
         ],
         "credentialSubject": {
-            "delivery_id":
-                "DELIVERY_001",
-            "sender_id":
-                "sender_001",
-            "package_id":
-                "PKG_001",
-            "car_id":
-                "CAR_RPI5_001",
-            "action":
-                "PICKUP_PACKAGE",
+            "delivery_id": "DELIVERY_001",
+            "sender_id": "sender_001",
+            "package_id": "PKG_001",
+            "car_id": "CAR_RPI5_001",
+            "action": "PICKUP_PACKAGE",
         },
     }
 
@@ -105,25 +90,23 @@ if __name__ == "__main__":
     )
 
     challenge = {
-        "nonce":
-            "TEST_NONCE_123"
+        "message_type": "CHALLENGE",
+        "delivery_id": "DELIVERY_001",
+        "car_id": "CAR_RPI5_001",
+        "package_id": "PKG_001",
+        "phase": "PICKUP",
+        "nonce": "TEST_NONCE_123",
+        "created_at": "2026-06-04T00:00:00Z",
     }
 
     session = SenderCarSession(
         "sender_001"
     )
 
-    presentation = (
-        session.create_presentation(
-            "DELIVERY_001",
-            challenge,
-        )
+    presentation = session.create_presentation(
+        "DELIVERY_001",
+        challenge,
     )
 
-    print(
-        "Presentation:"
-    )
-
-    print(
-        presentation
-    )
+    print("Presentation:")
+    print(presentation)

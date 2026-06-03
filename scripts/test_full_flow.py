@@ -32,11 +32,11 @@ from rpi5_car.verifier import VCVerifier
 from rpi5_car.gpio_lock import LockController
 
 
-DELIVERY_ID = "DELIVERY_FULL_TEST_001"
+DELIVERY_ID = "DELIVERY_FULL_TEST_002"
 SENDER_ID = "sender_full_test_001"
 RECEIVER_ID = "receiver_full_test_001"
 CAR_ID = "CAR_RPI5_FULL_TEST_001"
-PACKAGE_ID = "PKG_FULL_TEST_001"
+PACKAGE_ID = "PKG_FULL_TEST_002"
 
 
 def main():
@@ -112,17 +112,11 @@ def main():
         pickup_challenge,
     )
 
-    pickup_nonce_valid = challenge_manager.verify_nonce(
-        DELIVERY_ID,
-        sender_presentation["nonce"],
-    )
-
-    VCVerifier.verify_sender_pickup(
-        vc=sender_presentation["vc"],
+    VCVerifier.verify_sender_pickup_presentation(
+        presentation=sender_presentation,
         delivery_id=DELIVERY_ID,
         package_id=PACKAGE_ID,
         car_id=CAR_ID,
-        nonce_valid=pickup_nonce_valid,
     )
 
     print("Pickup PASS")
@@ -144,17 +138,11 @@ def main():
         delivery_challenge,
     )
 
-    delivery_nonce_valid = challenge_manager.verify_nonce(
-        DELIVERY_ID,
-        receiver_presentation["nonce"],
-    )
-
-    VCVerifier.verify_receiver_delivery(
-        vc=receiver_presentation["vc"],
+    VCVerifier.verify_receiver_delivery_presentation(
+        presentation=receiver_presentation,
         delivery_id=DELIVERY_ID,
         package_id=PACKAGE_ID,
         car_id=CAR_ID,
-        nonce_valid=delivery_nonce_valid,
     )
 
     print("Delivery PASS")

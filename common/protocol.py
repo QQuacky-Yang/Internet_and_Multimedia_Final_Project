@@ -119,6 +119,75 @@ def validate_presentation_message(message: Dict[str, Any]) -> bool:
         and required_fields.issubset(message.keys())
     )
 
+def make_signed_challenge_payload(
+    holder_id: str,
+    delivery_id: str,
+    car_id: str,
+    package_id: str,
+    phase: str,
+    nonce: str,
+) -> Dict[str, Any]:
+    """
+    Canonical payload signed by sender/receiver.
+
+    This prevents replay across:
+    - different deliveries
+    - different cars
+    - different packages
+    - pickup vs delivery phase
+    """
+
+    return {
+        "holder_id": holder_id,
+        "delivery_id": delivery_id,
+        "car_id": car_id,
+        "package_id": package_id,
+        "phase": phase,
+        "nonce": nonce,
+    }
+
+
+def make_presentation_message_v2(
+    holder_id: str,
+    vc: Dict[str, Any],
+    challenge: Dict[str, Any],
+    signature: str,
+    signature_type: str = "SIMULATED",
+) -> Dict[str, Any]:
+    """
+    VC presentation tied to a car challenge.
+    """
+
+    return {
+        "message_type": "VC_PRESENTATION",
+        "holder_id": holder_id,
+        "vc": vc,
+        "challenge": challenge,
+        "signature": signature,
+        "signature_type": signature_type,
+        "created_at": now_iso(),
+    }
+
+
+def validate_presentation_message_v2(
+    message: Dict[str, Any],
+) -> bool:
+    required_fields = {
+        "message_type",
+        "holder_id",
+        "vc",
+        "challenge",
+        "signature",
+        "signature_type",
+        "created_at",
+    }
+
+    return (
+        isinstance(message, dict)
+        and message.get("message_type") == "VC_PRESENTATION"
+        and required_fields.issubset(message.keys())
+        and validate_challenge_message(message["challenge"])
+    )
 
 if __name__ == "__main__":
     challenge = make_challenge_message(

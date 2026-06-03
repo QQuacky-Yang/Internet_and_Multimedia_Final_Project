@@ -4,7 +4,12 @@ common/tpm_utils.py
 Shared TPM utilities.
 
 Uses tpm2-tools when a real TPM is available.
-Falls back to safe simulation when TPM is unavailable.
+Supports role-specific TPM key paths:
+- car
+- receiver
+- sender
+
+If TPM is unavailable, caller can fall back to simulation.
 """
 
 import base64
@@ -12,11 +17,7 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional
-
-
-DEFAULT_TPM_KEY_CONTEXT = Path("data/car/tpm/car_key.ctx")
-DEFAULT_TPM_PUBLIC_KEY = Path("data/car/tpm/car_public.pem")
+from typing import Any, Dict
 
 
 def canonical_payload(payload: Dict[str, Any]) -> bytes:
@@ -26,6 +27,18 @@ def canonical_payload(payload: Dict[str, Any]) -> bytes:
         separators=(",", ":"),
         ensure_ascii=False,
     ).encode("utf-8")
+
+
+def get_tpm_dir(role: str) -> Path:
+    return Path("data") / role / "tpm"
+
+
+def get_tpm_key_context_path(role: str) -> Path:
+    return get_tpm_dir(role) / f"{role}_key.ctx"
+
+
+def get_tpm_public_key_path(role: str) -> Path:
+    return get_tpm_dir(role) / f"{role}_public.pem"
 
 
 def run_command(cmd: list[str]) -> subprocess.CompletedProcess:
@@ -38,10 +51,6 @@ def run_command(cmd: list[str]) -> subprocess.CompletedProcess:
 
 
 def tpm_available() -> bool:
-    """
-    Check whether tpm2-tools can talk to TPM.
-    """
-
     try:
         run_command(["tpm2_getrandom", "8"])
         return True
@@ -49,36 +58,27 @@ def tpm_available() -> bool:
         return False
 
 
-def export_tpm_public_key(
-    public_key_path: Optional[Path] = None,
-) -> str:
-    """
-    Read exported TPM public key PEM.
-
-    The key file will be generated later by setup_car_tpm.py.
-    """
-
-    path = public_key_path or DEFAULT_TPM_PUBLIC_KEY
+def export_tpm_public_key(role: str) -> str:
+    path = get_tpm_public_key_path(role)
 
     if not path.exists():
-        return "TPM_PUBLIC_KEY_PLACEHOLDER"
+        return f"TPM_PUBLIC_KEY_PLACEHOLDER_{role}"
 
     return path.read_text(encoding="utf-8")
 
 
+def tpm_key_ready(role: str) -> bool:
+    return (
+        get_tpm_key_context_path(role).exists()
+        and get_tpm_public_key_path(role).exists()
+    )
+
+
 def tpm_sign_payload(
+    role: str,
     payload: Dict[str, Any],
-    key_context_path: Optional[Path] = None,
 ) -> str:
-    """
-    Sign canonical JSON payload using TPM key context.
-
-    Requires:
-        tpm2-tools
-        existing TPM key context file
-    """
-
-    key_path = key_context_path or DEFAULT_TPM_KEY_CONTEXT
+    key_path = get_tpm_key_context_path(role)
 
     if not key_path.exists():
         raise FileNotFoundError(
@@ -118,13 +118,6 @@ def tpm_verify_signature(
     signature: str,
     public_key: str,
 ) -> bool:
-    """
-    Placeholder.
-
-    For the first real TPM milestone, signing is enough.
-    Verification will be done after we decide signature format.
-    """
-
     raise NotImplementedError(
         "TPM signature verification is not implemented yet"
     )
@@ -132,10 +125,9 @@ def tpm_verify_signature(
 
 if __name__ == "__main__":
     print("TPM available:", tpm_available())
-    print("TPM public key:")
-    print(export_tpm_public_key())
 
-    if tpm_available():
-        print("TPM detected. Signing requires key setup first.")
-    else:
-        print("No TPM detected or tpm2-tools not installed.")
+    for role in ["car", "receiver", "sender"]:
+        print(f"\nRole: {role}")
+        print("Key ready:", tpm_key_ready(role))
+        print("Public key:")
+        print(export_tpm_public_key(role))

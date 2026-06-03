@@ -1,20 +1,20 @@
 """
-scripts/setup_receiver_tpm.py
+scripts/setup_sender_tpm.py
 
-Create TPM signing key for receiver device.
+Create TPM signing key for sender device.
 
-Receiver TPM is optional.
-If no TPM exists, receiver_client will use simulation mode.
+Sender TPM is optional.
+If no TPM exists, sender_client will use simulation mode.
 
 Requires:
     sudo apt install tpm2-tools
 
 Output:
-    data/receiver/tpm/receiver_primary.ctx
-    data/receiver/tpm/receiver_key.priv
-    data/receiver/tpm/receiver_key.pub
-    data/receiver/tpm/receiver_key.ctx
-    data/receiver/tpm/receiver_public.pem
+    data/sender/tpm/sender_primary.ctx
+    data/sender/tpm/sender_key.priv
+    data/sender/tpm/sender_key.pub
+    data/sender/tpm/sender_key.ctx
+    data/sender/tpm/sender_public.pem
 """
 
 import subprocess
@@ -23,13 +23,13 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TPM_DIR = PROJECT_ROOT / "data" / "receiver" / "tpm"
+TPM_DIR = PROJECT_ROOT / "data" / "sender" / "tpm"
 
-PRIMARY_CTX = TPM_DIR / "receiver_primary.ctx"
-KEY_PRIV = TPM_DIR / "receiver_key.priv"
-KEY_PUB = TPM_DIR / "receiver_key.pub"
-KEY_CTX = TPM_DIR / "receiver_key.ctx"
-PUBLIC_PEM = TPM_DIR / "receiver_public.pem"
+PRIMARY_CTX = TPM_DIR / "sender_primary.ctx"
+KEY_PRIV = TPM_DIR / "sender_key.priv"
+KEY_PUB = TPM_DIR / "sender_key.pub"
+KEY_CTX = TPM_DIR / "sender_key.ctx"
+PUBLIC_PEM = TPM_DIR / "sender_public.pem"
 
 
 def run(cmd: list[str]) -> None:
@@ -44,7 +44,7 @@ def main():
         run(["tpm2_getrandom", "8"])
     except Exception:
         print("TPM not available or tpm2-tools not installed.")
-        print("Receiver TPM setup skipped.")
+        print("Sender TPM setup skipped.")
         sys.exit(0)
 
     run([
@@ -77,7 +77,7 @@ def main():
         "-o", str(PUBLIC_PEM),
     ])
 
-    print("Receiver TPM key setup complete.")
+    print("Sender TPM key setup complete.")
     print("Public key:", PUBLIC_PEM)
     print("Key context:", KEY_CTX)
 
