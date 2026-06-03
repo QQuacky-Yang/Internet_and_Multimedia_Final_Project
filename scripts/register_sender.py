@@ -1,7 +1,7 @@
 """
-scripts/create_delivery.py
+scripts/register_sender.py
 
-Create a delivery on the platform.
+Register a sender to the platform server.
 """
 
 import argparse
@@ -14,54 +14,56 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import requests
 
 from common.config import SERVER_URL
+from sender_client.tpm_holder import SenderTPM
 
 
-def create_delivery(
-    delivery_id: str,
+def register_sender(
     sender_id: str,
-    receiver_id: str,
-    package_id: str,
-    car_id: str,
+    display_name: str,
 ):
+    tpm = SenderTPM(sender_id)
+
+    sender_pubkey = tpm.get_public_key()
+
     payload = {
-        "delivery_id": delivery_id,
         "sender_id": sender_id,
-        "receiver_id": receiver_id,
-        "package_id": package_id,
-        "car_id": car_id,
+        "sender_pubkey": sender_pubkey,
+        "display_name": display_name,
     }
 
     response = requests.post(
-        f"{SERVER_URL}/create_delivery",
+        f"{SERVER_URL}/register_sender",
         json=payload,
         timeout=5,
     )
 
     if not response.ok:
-
         try:
             error = response.json()
         except Exception:
             error = {"detail": response.text}
 
-        print("Request failed:")
-        print("Status:", response.status_code)
-        print("Response:", error)
+        detail = error.get("detail", "")
 
+        if response.status_code == 400 and "already exists" in detail:
+            print(f"Sender already registered: {sender_id}")
+            return {
+                "status": "already_registered",
+                "sender_id": sender_id,
+                "detail": detail,
+            }
+
+        print("Request failed:")
+        print("Status code:", response.status_code)
+        print("Response:", error)
         response.raise_for_status()
 
     return response.json()
 
 
 def main():
-
     parser = argparse.ArgumentParser(
-        description="Create delivery"
-    )
-
-    parser.add_argument(
-        "--delivery-id",
-        default="DELIVERY_001",
+        description="Register sender to platform"
     )
 
     parser.add_argument(
@@ -70,31 +72,18 @@ def main():
     )
 
     parser.add_argument(
-        "--receiver-id",
-        default="receiver_001",
-    )
-
-    parser.add_argument(
-        "--package-id",
-        default="PKG_001",
-    )
-
-    parser.add_argument(
-        "--car-id",
-        default="CAR_RPI5_001",
+        "--display-name",
+        default="Default Sender",
     )
 
     args = parser.parse_args()
 
-    result = create_delivery(
-        delivery_id=args.delivery_id,
+    result = register_sender(
         sender_id=args.sender_id,
-        receiver_id=args.receiver_id,
-        package_id=args.package_id,
-        car_id=args.car_id,
+        display_name=args.display_name,
     )
 
-    print("Created delivery:")
+    print("Registered sender:")
     print(result)
 
 
