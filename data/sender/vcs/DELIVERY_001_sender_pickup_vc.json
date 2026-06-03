@@ -1,0 +1,14 @@
+{
+  "id": "urn:uuid:test",
+  "type": [
+    "VerifiableCredential",
+    "SenderPickupCredential"
+  ],
+  "credentialSubject": {
+    "delivery_id": "DELIVERY_001",
+    "sender_id": "sender_001",
+    "package_id": "PKG_001",
+    "car_id": "CAR_RPI5_001",
+    "action": "PICKUP_PACKAGE"
+  }
+}
