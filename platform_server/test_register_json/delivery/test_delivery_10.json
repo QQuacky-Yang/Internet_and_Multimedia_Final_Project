@@ -1,0 +1,8 @@
+{
+    "delivery_id": "DELIVERY_010",
+    "sender_id": "sender_999",
+    "receiver_id": "receiver_001",
+    "package_id": "PKG_010",
+    "car_id": "CAR_RPI5_001",
+    "expiration_hours": 24
+}
