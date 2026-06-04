@@ -102,6 +102,8 @@ def tpm_sign_payload(
                 str(key_path),
                 "-g",
                 "sha256",
+                "-f",
+                "plain",
                 "-o",
                 str(signature_path),
                 str(message_path),
@@ -112,16 +114,31 @@ def tpm_sign_payload(
 
     return base64.b64encode(signature).decode("utf-8")
 
-
 def tpm_verify_signature(
     payload: Dict[str, Any],
     signature: str,
     public_key: str,
 ) -> bool:
-    raise NotImplementedError(
-        "TPM signature verification is not implemented yet"
-    )
+    import base64
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.asymmetric import padding
+    from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
+    try:
+        pub = load_pem_public_key(public_key.encode("utf-8"))
+        sig = base64.b64decode(signature)
+
+        pub.verify(
+            sig,
+            canonical_payload(payload),
+            padding.PKCS1v15(),
+            hashes.SHA256(),
+        )
+
+        return True
+
+    except Exception:
+        return False
 
 if __name__ == "__main__":
     print("TPM available:", tpm_available())

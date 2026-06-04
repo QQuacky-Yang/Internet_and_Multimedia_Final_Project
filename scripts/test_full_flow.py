@@ -31,12 +31,14 @@ from rpi5_car.challenge import ChallengeManager
 from rpi5_car.verifier import VCVerifier
 from rpi5_car.gpio_lock import LockController
 
+from datetime import datetime
 
-DELIVERY_ID = "DELIVERY_FULL_TEST_002"
+RUN_ID = datetime.now().strftime("%Y%m%d%H%M%S")
+DELIVERY_ID = f"DELIVERY_FULL_TEST_{RUN_ID}"
+PACKAGE_ID = f"PKG_FULL_TEST_{RUN_ID}"
 SENDER_ID = "sender_full_test_001"
 RECEIVER_ID = "receiver_full_test_001"
 CAR_ID = "CAR_RPI5_FULL_TEST_001"
-PACKAGE_ID = "PKG_FULL_TEST_002"
 
 
 def main():

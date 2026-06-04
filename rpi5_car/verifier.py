@@ -32,6 +32,7 @@ from common.errors import (
     ErrorCode,
 )
 
+from common.tpm_utils import tpm_verify_signature
 
 class VCVerifier:
 
@@ -241,9 +242,33 @@ class VCVerifier:
                 )
 
         elif signature_type == "TPM2_RSA_SHA256":
-            raise NotImplementedError(
-                "Real TPM signature verification not implemented yet"
+            payload = make_signed_challenge_payload(
+                holder_id=holder_id,
+                delivery_id=delivery_id,
+                car_id=car_id,
+                package_id=package_id,
+                phase="PICKUP",   # use "DELIVERY" in receiver function
+                nonce=challenge["nonce"],
             )
+
+            public_key = None
+
+            if is_sender_pickup_vc(vc):
+                public_key = vc["credentialSubject"].get("sender_pubkey")
+            else:
+                public_key = vc["credentialSubject"].get("receiver_pubkey")
+
+            if not public_key:
+                raise VCSystemError(
+                    ErrorCode.INVALID_SIGNATURE,
+                    "Missing holder public key in VC",
+                )
+
+            if not tpm_verify_signature(payload, signature, public_key):
+                raise VCSystemError(
+                    ErrorCode.INVALID_SIGNATURE,
+                    "TPM signature invalid",
+                )
 
         else:
             raise VCSystemError(
