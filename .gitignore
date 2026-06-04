@@ -32,3 +32,6 @@ build/
 
 # Local secrets
 .env
+data/car/tpm/
+data/receiver/tpm/
+data/sender/tpm/
