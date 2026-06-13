@@ -96,7 +96,12 @@ def main():
     )
 
     challenge_manager = ChallengeManager()
-    lock = LockController(simulation=True)
+    lock = LockController(
+	simulation=False,
+	gpio_pin=19,
+	locked_angle=60,
+	unlocked_angle=-60,
+    )	
 
     print("=== Sender pickup verification ===")
 
