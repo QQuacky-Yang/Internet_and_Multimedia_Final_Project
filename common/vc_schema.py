@@ -56,6 +56,8 @@ def get_sender_pubkey(vc: Dict[str, Any]) -> Optional[str]:
 def get_receiver_pubkey(vc: Dict[str, Any]) -> Optional[str]:
     return get_credential_subject(vc).get("receiver_pubkey")
 
+def get_expiration_date(vc: Dict[str, Any]) -> Optional[str]:
+    return vc.get("expirationDate")
 
 def is_sender_pickup_vc(vc: Dict[str, Any]) -> bool:
     return (

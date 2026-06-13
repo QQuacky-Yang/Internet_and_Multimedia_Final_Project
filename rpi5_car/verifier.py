@@ -14,6 +14,8 @@ Future:
     Revocation checking
 """
 
+from datetime import datetime, timezone
+
 from common.vc_schema import (
     get_delivery_id,
     get_package_id,
@@ -22,6 +24,7 @@ from common.vc_schema import (
     get_receiver_id,
     get_sender_pubkey,
     get_receiver_pubkey,
+    get_expiration_date,
     is_sender_pickup_vc,
     is_receiver_delivery_vc,
 )
@@ -78,8 +81,7 @@ class VCVerifier:
         holder_id: str,
         expected_holder_id: str | None,
     ) -> None:
-        print("DEBUG holder_id =", holder_id)
-        print("DEBUG expected_holder_id =", expected_holder_id)
+
         if expected_holder_id is None:
             raise VCSystemError(
                 ErrorCode.INVALID_VC,
@@ -93,6 +95,7 @@ class VCVerifier:
                 f"presentation={holder_id}, "
                 f"vc={expected_holder_id}",
             )
+    
 
     @staticmethod
     def _verify_simulated_signature(
@@ -138,6 +141,8 @@ class VCVerifier:
             holder_id=holder_id,
             expected_holder_id=get_sender_id(vc),
         )
+        
+        VCVerifier._verify_not_expired(vc)
 
         if get_delivery_id(vc) != delivery_id:
             raise VCSystemError(
@@ -227,6 +232,8 @@ class VCVerifier:
             holder_id=holder_id,
             expected_holder_id=get_receiver_id(vc),
         )
+        
+        VCVerifier._verify_not_expired(vc)
 
         if get_delivery_id(vc) != delivery_id:
             raise VCSystemError(
@@ -392,7 +399,30 @@ class VCVerifier:
             )
 
         return True
+    @staticmethod
+    def _verify_not_expired(
+        vc: dict,
+    ) -> None:
 
+        expiration = get_expiration_date(vc)
+
+        if not expiration:
+            raise VCSystemError(
+                ErrorCode.INVALID_VC,
+                "VC missing expirationDate",
+            )
+
+        expires_at = datetime.fromisoformat(
+            expiration.replace("Z", "+00:00")
+        )
+
+        now = datetime.now(timezone.utc)
+
+        if now > expires_at:
+            raise VCSystemError(
+                ErrorCode.INVALID_VC,
+                "VC expired",
+            )
 
 if __name__ == "__main__":
 
@@ -411,6 +441,8 @@ if __name__ == "__main__":
             "VerifiableCredential",
             "SenderPickupCredential",
         ],
+        "issuanceDate": "2026-06-04T00:00:00+00:00",
+        "expirationDate": "2099-01-01T00:00:00+00:00",
         "credentialSubject": {
             "delivery_id": "DELIVERY_001",
             "sender_id": "sender_001",
@@ -419,7 +451,7 @@ if __name__ == "__main__":
             "action": "PICKUP_PACKAGE",
         },
     }
-
+    
     presentation = {
         "message_type": "VC_PRESENTATION",
         "holder_id": "sender_001",
