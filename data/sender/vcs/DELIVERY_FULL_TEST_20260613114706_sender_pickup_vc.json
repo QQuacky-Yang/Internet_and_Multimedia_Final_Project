@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "https://www.w3.org/2018/credentials/v1",
+    "https://example.com/contexts/delivery-v1"
+  ],
+  "credentialSubject": {
+    "action": "PICKUP_PACKAGE",
+    "car_id": "CAR_RPI5_FULL_TEST_001",
+    "delivery_id": "DELIVERY_FULL_TEST_20260613114706",
+    "package_id": "PKG_FULL_TEST_20260613114706",
+    "sender_id": "sender_full_test_001",
+    "sender_pubkey": "SIMULATED_SENDER_PUBLIC_KEY_sender_full_test_001"
+  },
+  "expirationDate": "2026-06-14T20:47:06.167926+00:00",
+  "id": "urn:uuid:37a8d729-f36c-421e-9229-9b8e9aa64ed6",
+  "issuanceDate": "2026-06-13T20:47:06.167926+00:00",
+  "issuer": "did:platform:logistics",
+  "proof": {
+    "created": "2026-06-13T20:47:06.249850+00:00",
+    "proofPurpose": "assertionMethod",
+    "signature": "E1tm0q4Gfk7SRkxQHXigeq0KZHK-Tv8OFPnsOPs2HkCR-DYIAHJCsSsN25gzw_LFolku8syFaMfcvUXrTjv1Ag==",
+    "type": "Ed25519Signature",
+    "verificationMethod": "did:platform:logistics#issuer-key-1"
+  },
+  "type": [
+    "VerifiableCredential",
+    "SenderPickupCredential"
+  ]
+}

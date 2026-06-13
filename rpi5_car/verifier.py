@@ -18,6 +18,10 @@ from common.vc_schema import (
     get_delivery_id,
     get_package_id,
     get_car_id,
+    get_sender_id,
+    get_receiver_id,
+    get_sender_pubkey,
+    get_receiver_pubkey,
     is_sender_pickup_vc,
     is_receiver_delivery_vc,
 )
@@ -70,6 +74,26 @@ class VCVerifier:
             )
 
     @staticmethod
+    def _verify_holder_binding(
+        holder_id: str,
+        expected_holder_id: str | None,
+    ) -> None:
+
+        if expected_holder_id is None:
+            raise VCSystemError(
+                ErrorCode.INVALID_VC,
+                "VC missing holder identity",
+            )
+
+        if holder_id != expected_holder_id:
+            raise VCSystemError(
+                ErrorCode.INVALID_VC,
+                f"Holder mismatch: "
+                f"presentation={holder_id}, "
+                f"vc={expected_holder_id}",
+            )
+
+    @staticmethod
     def _verify_simulated_signature(
         holder_id: str,
         nonce: str,
@@ -108,6 +132,10 @@ class VCVerifier:
             raise VCSystemError(
                 ErrorCode.INVALID_VC,
                 "Not a sender pickup VC",
+            )
+            VCVerifier._verify_holder_binding(
+                holder_id=holder_id,
+                expected_holder_id=get_sender_id(vc),
             )
 
         if get_delivery_id(vc) != delivery_id:
@@ -194,6 +222,10 @@ class VCVerifier:
                 ErrorCode.INVALID_VC,
                 "Not a receiver delivery VC",
             )
+            VCVerifier._verify_holder_binding(
+                holder_id=holder_id,
+                expected_holder_id=get_receiver_id(vc),
+            )
 
         if get_delivery_id(vc) != delivery_id:
             raise VCSystemError(
@@ -247,17 +279,16 @@ class VCVerifier:
                 delivery_id=delivery_id,
                 car_id=car_id,
                 package_id=package_id,
-                phase="PICKUP",   # use "DELIVERY" in receiver function
+                phase="DELIVERY",
                 nonce=challenge["nonce"],
             )
 
             public_key = None
-
             if is_sender_pickup_vc(vc):
                 public_key = vc["credentialSubject"].get("sender_pubkey")
             else:
                 public_key = vc["credentialSubject"].get("receiver_pubkey")
-
+            
             if not public_key:
                 raise VCSystemError(
                     ErrorCode.INVALID_SIGNATURE,
