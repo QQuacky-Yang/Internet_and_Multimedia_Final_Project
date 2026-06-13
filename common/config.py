@@ -14,12 +14,10 @@ Used by:
 # Platform Server
 # =========================================================
 
-SERVER_HOST = "127.0.0.1"
+SERVER_HOST = "172.20.10.2"
 SERVER_PORT = 8000
+SERVER_URL = f"http://{SERVER_HOST}:{SERVER_PORT}"
 
-SERVER_URL = (
-    f"http://{SERVER_HOST}:{SERVER_PORT}"
-)
 
 # =========================================================
 # Delivery
