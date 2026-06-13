@@ -1,0 +1,15 @@
+{
+  "id": "urn:uuid:wrong-holder-test",
+  "type": [
+    "VerifiableCredential",
+    "SenderPickupCredential"
+  ],
+  "credentialSubject": {
+    "delivery_id": "DELIVERY_WRONG_HOLDER_TEST",
+    "sender_id": "sender_001",
+    "sender_pubkey": "SIMULATED_SENDER_PUBLIC_KEY_sender_001",
+    "package_id": "PKG_WRONG_HOLDER_TEST",
+    "car_id": "CAR_RPI5_FULL_TEST_001",
+    "action": "PICKUP_PACKAGE"
+  }
+}

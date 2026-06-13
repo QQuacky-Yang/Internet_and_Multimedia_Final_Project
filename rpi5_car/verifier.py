@@ -78,7 +78,8 @@ class VCVerifier:
         holder_id: str,
         expected_holder_id: str | None,
     ) -> None:
-
+        print("DEBUG holder_id =", holder_id)
+        print("DEBUG expected_holder_id =", expected_holder_id)
         if expected_holder_id is None:
             raise VCSystemError(
                 ErrorCode.INVALID_VC,
@@ -133,10 +134,10 @@ class VCVerifier:
                 ErrorCode.INVALID_VC,
                 "Not a sender pickup VC",
             )
-            VCVerifier._verify_holder_binding(
-                holder_id=holder_id,
-                expected_holder_id=get_sender_id(vc),
-            )
+        VCVerifier._verify_holder_binding(
+            holder_id=holder_id,
+            expected_holder_id=get_sender_id(vc),
+        )
 
         if get_delivery_id(vc) != delivery_id:
             raise VCSystemError(
@@ -222,10 +223,10 @@ class VCVerifier:
                 ErrorCode.INVALID_VC,
                 "Not a receiver delivery VC",
             )
-            VCVerifier._verify_holder_binding(
-                holder_id=holder_id,
-                expected_holder_id=get_receiver_id(vc),
-            )
+        VCVerifier._verify_holder_binding(
+            holder_id=holder_id,
+            expected_holder_id=get_receiver_id(vc),
+        )
 
         if get_delivery_id(vc) != delivery_id:
             raise VCSystemError(
@@ -412,6 +413,7 @@ if __name__ == "__main__":
         ],
         "credentialSubject": {
             "delivery_id": "DELIVERY_001",
+            "sender_id": "sender_001",
             "package_id": "PKG_001",
             "car_id": "CAR_RPI5_001",
             "action": "PICKUP_PACKAGE",
